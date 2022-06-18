@@ -13,7 +13,9 @@ zig build run
 
 ## Resources
 
-- [libgba](http://starflakenights.net/libraries/devkitpro-libgba/docs/html/files.html)
 - [gba-examples](https://github.com/devkitPro/gba-examples)
-- [GBATEK](https://www.problemkaputt.de/gbatek.htm)
+- [libgba repository](https://github.com/devkitPro/libgba)
+- [libgba documentation](http://starflakenights.net/libraries/devkitpro-libgba/docs/html/files.html)
 - [gbadev resources](https://gbadev.net/)
+- [GBATEK](https://www.problemkaputt.de/gbatek.htm)
+
