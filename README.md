@@ -8,7 +8,7 @@
 - [devkitPro](https://devkitpro.org/wiki/Getting_Started)
 
 ```
-pacman -S gba-dev mgba-sdl
+pacman -S gba-dev
 git clone https://github.com/zig-homebrew/zig-gba
 cd zig-gba/
 zig build # then run zig-out/zig-gba.gba with mgba
