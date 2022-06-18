@@ -1,5 +1,7 @@
 # zig-gba
 
+![](screenshot.webp)
+
 ```
 pacman -S gba-dev mgba-sdl
 git clone https://github.com/zig-homebrew/zig-gba
