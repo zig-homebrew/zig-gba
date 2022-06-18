@@ -1,5 +1,7 @@
 const std = @import("std");
+const builtin = @import("builtin");
 
+const emulator = "mgba";
 const flags = .{"-lgba"};
 const devkitpro = "/opt/devkitpro";
 
@@ -19,8 +21,9 @@ pub fn build(b: *std.build.Builder) void {
     });
     obj.setBuildMode(mode);
 
+    const extension = if (builtin.target.os.tag == .windows) ".exe" else "";
     const elf = b.addSystemCommand(&(.{
-        devkitpro ++ "/devkitARM/bin/arm-none-eabi-gcc",
+        devkitpro ++ "/devkitARM/bin/arm-none-eabi-gcc" ++ extension,
         "-g",
         "-mthumb",
         "-mthumb-interwork",
@@ -35,7 +38,7 @@ pub fn build(b: *std.build.Builder) void {
     }));
 
     const gba = b.addSystemCommand(&.{
-        devkitpro ++ "/devkitARM/bin/arm-none-eabi-objcopy",
+        devkitpro ++ "/devkitARM/bin/arm-none-eabi-objcopy" ++ extension,
         "-O",
         "binary",
         "zig-out/zig-gba.elf",
@@ -43,7 +46,7 @@ pub fn build(b: *std.build.Builder) void {
     });
 
     const fix = b.addSystemCommand(&.{
-        devkitpro ++ "/tools/bin/gbafix",
+        devkitpro ++ "/tools/bin/gbafix" ++ extension,
         "zig-out/zig-gba.gba",
     });
     fix.stdout_action = .ignore;
@@ -53,9 +56,8 @@ pub fn build(b: *std.build.Builder) void {
     gba.step.dependOn(&elf.step);
     elf.step.dependOn(&obj.step);
 
-    // run in mgba
     const run_step = b.step("run", "Run in mGBA");
-    const emulator = b.addSystemCommand(&.{ "mgba", "zig-out/zig-gba.gba" });
+    const mgba = b.addSystemCommand(&.{ emulator, "zig-out/zig-gba.gba" });
     run_step.dependOn(&gba.step);
-    run_step.dependOn(&emulator.step);
+    run_step.dependOn(&mgba.step);
 }

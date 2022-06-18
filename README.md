@@ -2,17 +2,17 @@
 
 ![](screenshot.webp)
 
+## Getting started
+
+- [zig](https://ziglang.org/download/)
+- [devkitPro](https://devkitpro.org/wiki/Getting_Started)
+
 ```
 pacman -S gba-dev mgba-sdl
 git clone https://github.com/zig-homebrew/zig-gba
 cd zig-gba/
 zig build run
 ```
-
-## Dependencies
-
-- [zig](https://ziglang.org/download/)
-- [devkitPro](https://devkitpro.org/wiki/Getting_Started)
 
 ## Resources
 
