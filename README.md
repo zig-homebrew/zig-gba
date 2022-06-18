@@ -1,6 +1,7 @@
 # zig-gba
 
 ```
+pacman -S gba-dev
 git clone https://github.com/zig-homebrew/zig-gba
 cd zig-gba/
 zig build run
