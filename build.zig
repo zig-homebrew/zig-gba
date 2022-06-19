@@ -13,6 +13,7 @@ pub fn build(b: *std.build.Builder) void {
     obj.linkLibC();
     obj.setLibCFile(std.build.FileSource{ .path = "libc.txt" });
     obj.addIncludeDir(devkitpro ++ "/libgba/include");
+    obj.addIncludeDir(devkitpro ++ "/portlibs/gba/include");
     obj.addIncludeDir(devkitpro ++ "/portlibs/armv4/include");
     obj.setTarget(.{
         .cpu_arch = .thumb,
@@ -31,6 +32,7 @@ pub fn build(b: *std.build.Builder) void {
         "-specs=" ++ devkitpro ++ "/devkitARM/arm-none-eabi/lib/gba.specs",
         "zig-out/zig-gba.o",
         "-L" ++ devkitpro ++ "/libgba/lib",
+        "-L" ++ devkitpro ++ "/portlibs/gba/lib",
         "-L" ++ devkitpro ++ "/portlibs/armv4/lib",
     } ++ flags ++ .{
         "-o",
