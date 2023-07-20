@@ -6,60 +6,66 @@ const flags = .{"-lgba"};
 const devkitpro = "/opt/devkitpro";
 
 pub fn build(b: *std.build.Builder) void {
-    const mode = b.standardReleaseOptions();
-
-    const obj = b.addObject("zig-gba", "src/main.zig");
-    obj.setOutputDir("zig-out");
-    obj.linkLibC();
-    obj.setLibCFile(std.build.FileSource{ .path = "libc.txt" });
-    obj.addIncludeDir(devkitpro ++ "/libgba/include");
-    obj.addIncludeDir(devkitpro ++ "/portlibs/gba/include");
-    obj.addIncludeDir(devkitpro ++ "/portlibs/armv4/include");
-    obj.setTarget(.{
+    const target = std.zig.CrossTarget{
         .cpu_arch = .thumb,
         .os_tag = .freestanding,
         .cpu_model = .{ .explicit = &std.Target.arm.cpu.arm7tdmi },
+    };
+    const optimize = b.standardOptimizeOption(.{});
+
+    const obj = b.addObject(.{
+        .name = "zig-gba",
+        .root_source_file = .{ .path = "src/main.zig" },
+        .link_libc = true,
+        .target = target,
+        .optimize = optimize,
     });
-    obj.setBuildMode(mode);
+    obj.setLibCFile(std.build.FileSource{ .path = "libc.txt" });
+    obj.addIncludePath(devkitpro ++ "/libgba/include");
+    obj.addIncludePath(devkitpro ++ "/portlibs/gba/include");
+    obj.addIncludePath(devkitpro ++ "/portlibs/armv4/include");
 
     const extension = if (builtin.target.os.tag == .windows) ".exe" else "";
-    const elf = b.addSystemCommand(&(.{
+    const elf = b.addSystemCommand(&.{
         devkitpro ++ "/devkitARM/bin/arm-none-eabi-gcc" ++ extension,
         "-g",
         "-mthumb",
         "-mthumb-interwork",
-        "-Wl,-Map,zig-out/zig-gba.map",
-        "-specs=" ++ devkitpro ++ "/devkitARM/arm-none-eabi/lib/gba.specs",
-        "zig-out/zig-gba.o",
+    });
+    _ = elf.addPrefixedOutputFileArg("-Wl,-Map,", "zig-gba.map");
+    elf.addPrefixedFileSourceArg("-specs=", .{ .path = devkitpro ++ "/devkitARM/arm-none-eabi/lib/gba.specs" });
+    elf.addFileSourceArg(obj.getOutputSource());
+    elf.addArgs(&.{
         "-L" ++ devkitpro ++ "/libgba/lib",
         "-L" ++ devkitpro ++ "/portlibs/gba/lib",
         "-L" ++ devkitpro ++ "/portlibs/armv4/lib",
-    } ++ flags ++ .{
-        "-o",
-        "zig-out/zig-gba.elf",
-    }));
+    });
+    elf.addArgs(&flags);
+    elf.addArg("-o");
+    const elf_file = elf.addOutputFileArg("zig-gba.elf");
 
     const gba = b.addSystemCommand(&.{
         devkitpro ++ "/devkitARM/bin/arm-none-eabi-objcopy" ++ extension,
         "-O",
         "binary",
-        "zig-out/zig-gba.elf",
-        "zig-out/zig-gba.gba",
     });
+    gba.addFileSourceArg(elf_file);
+    const gba_file = gba.addOutputFileArg("zig-gba.gba");
 
-    const fix = b.addSystemCommand(&.{
-        devkitpro ++ "/tools/bin/gbafix" ++ extension,
-        "zig-out/zig-gba.gba",
-    });
-    fix.stdout_action = .ignore;
+    const fix = b.addSystemCommand(&.{devkitpro ++ "/tools/bin/gbafix" ++ extension});
+    fix.addFileSourceArg(gba_file);
 
-    b.default_step.dependOn(&fix.step);
+    const install = b.addInstallBinFile(gba_file, "zig-gba.gba");
+
+    b.default_step.dependOn(&install.step);
+    install.step.dependOn(&fix.step);
     fix.step.dependOn(&gba.step);
     gba.step.dependOn(&elf.step);
     elf.step.dependOn(&obj.step);
 
     const run_step = b.step("run", "Run in mGBA");
-    const mgba = b.addSystemCommand(&.{ emulator, "zig-out/zig-gba.gba" });
-    run_step.dependOn(&gba.step);
+    const mgba = b.addSystemCommand(&.{emulator});
+    mgba.addFileSourceArg(gba_file);
+    run_step.dependOn(&install.step);
     run_step.dependOn(&mgba.step);
 }
