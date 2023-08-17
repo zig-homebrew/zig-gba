@@ -23,10 +23,11 @@ pub fn build(b: *std.build.Builder) void {
     obj.setLibCFile(std.build.FileSource{ .path = "libc.txt" });
 
     const libgba_include = std.build.LazyPath{ .cwd_relative = devkitpro ++ "/libgba/include" };
-    obj.addIncludePath(libgba_include);
     const portlibs_gba_include = std.build.LazyPath{ .cwd_relative = devkitpro ++ "/portlibs/gba/include" };
-    obj.addIncludePath(portlibs_gba_include);
     const portlibs_armv4_include = std.build.LazyPath{ .cwd_relative = devkitpro ++ "/portlibs/armv4/include" };
+
+    obj.addIncludePath(libgba_include);
+    obj.addIncludePath(portlibs_gba_include);
     obj.addIncludePath(portlibs_armv4_include);
 
     const extension = if (builtin.target.os.tag == .windows) ".exe" else "";
