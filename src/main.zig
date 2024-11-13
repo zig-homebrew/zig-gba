@@ -6,7 +6,7 @@ export fn main(_: c_int, _: [*]const [*:0]const u8) void {
     c.irqEnable(c.IRQ_VBLANK);
     c.consoleDemoInit();
 
-    _ = c.printf("Hello, Zig");
+    _ = c.printf("oie lols");
     while (true) {
         system.vblank_intr_wait();
     }
