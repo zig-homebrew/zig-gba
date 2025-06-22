@@ -5,7 +5,7 @@ const emulator = "mgba";
 const flags = .{"-lgba"};
 const devkitpro = "/opt/devkitpro";
 
-pub fn build(b: *std.build.Builder) void {
+pub fn build(b: *std.Build) void {
     const target = std.zig.CrossTarget{
         .cpu_arch = .thumb,
         .os_tag = .freestanding,
@@ -15,15 +15,15 @@ pub fn build(b: *std.build.Builder) void {
 
     const obj = b.addObject(.{
         .name = "zig-gba",
-        .root_source_file = .{ .path = "src/main.zig" },
+        .root_source_file = b.path("src/main.zig"),
         .link_libc = true,
-        .target = target,
+        .target = b.resolveTargetQuery(target),
         .optimize = optimize,
     });
-    obj.setLibCFile(std.build.FileSource{ .path = "libc.txt" });
-    obj.addIncludePath(devkitpro ++ "/libgba/include");
-    obj.addIncludePath(devkitpro ++ "/portlibs/gba/include");
-    obj.addIncludePath(devkitpro ++ "/portlibs/armv4/include");
+    obj.setLibCFile(std.Build.LazyPath{ .cwd_relative = "libc.txt" });
+    obj.addIncludePath(std.Build.LazyPath{ .cwd_relative = devkitpro ++ "/libgba/include"});
+    obj.addIncludePath(std.Build.LazyPath{ .cwd_relative = devkitpro ++ "/portlibs/gba/include"});
+    obj.addIncludePath(std.Build.LazyPath{ .cwd_relative = devkitpro ++ "/portlibs/armv4/include"});
 
     const extension = if (builtin.target.os.tag == .windows) ".exe" else "";
     const elf = b.addSystemCommand(&.{
@@ -33,8 +33,8 @@ pub fn build(b: *std.build.Builder) void {
         "-mthumb-interwork",
     });
     _ = elf.addPrefixedOutputFileArg("-Wl,-Map,", "zig-gba.map");
-    elf.addPrefixedFileSourceArg("-specs=", .{ .path = devkitpro ++ "/devkitARM/arm-none-eabi/lib/gba.specs" });
-    elf.addFileSourceArg(obj.getOutputSource());
+    elf.addPrefixedFileArg("-specs=", std.Build.LazyPath{ .cwd_relative = devkitpro ++ "/devkitARM/arm-none-eabi/lib/gba.specs" });
+    elf.addFileArg(obj.getEmittedBin());
     elf.addArgs(&.{
         "-L" ++ devkitpro ++ "/libgba/lib",
         "-L" ++ devkitpro ++ "/portlibs/gba/lib",
@@ -49,11 +49,11 @@ pub fn build(b: *std.build.Builder) void {
         "-O",
         "binary",
     });
-    gba.addFileSourceArg(elf_file);
+    gba.addFileArg(elf_file);
     const gba_file = gba.addOutputFileArg("zig-gba.gba");
 
     const fix = b.addSystemCommand(&.{devkitpro ++ "/tools/bin/gbafix" ++ extension});
-    fix.addFileSourceArg(gba_file);
+    fix.addFileArg(gba_file);
 
     const install = b.addInstallBinFile(gba_file, "zig-gba.gba");
 
@@ -65,7 +65,7 @@ pub fn build(b: *std.build.Builder) void {
 
     const run_step = b.step("run", "Run in mGBA");
     const mgba = b.addSystemCommand(&.{emulator});
-    mgba.addFileSourceArg(gba_file);
+    mgba.addFileArg(gba_file);
     run_step.dependOn(&install.step);
     run_step.dependOn(&mgba.step);
 }
